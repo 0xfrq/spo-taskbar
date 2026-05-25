@@ -79,11 +79,10 @@ std::string ExtractJsonField(const std::string& json, const std::string& field) 
     if (pos == std::string::npos) return "";
     pos += key.length();
 
-    // Skip spaces
     while (pos < json.length() && isspace(json[pos])) pos++;
 
     if (json[pos] == '\"') {
-        pos++; // Skip opening quote
+        pos++; 
         std::string val;
         while (pos < json.length()) {
             if (json[pos] == '\\' && pos + 1 < json.length()) {
@@ -129,7 +128,6 @@ void FetchLyricsThread(std::string track, std::string artist, int durationSec) {
                 int m = std::stoi(match[1]);
                 double s = std::stod(match[2]);
                 std::string text = match[3];
-                // trim
                 text.erase(0, text.find_first_not_of(" \t\r\n"));
                 text.erase(text.find_last_not_of(" \t\r\n") + 1);
                 
@@ -178,7 +176,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         return 0;
     }
     case WM_TIMER: {
-        // Poll Media
         try {
             auto manager = GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();
             auto session = manager.GetCurrentSession();
@@ -188,7 +185,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 
                 std::wstring title = props.Title().c_str();
                 std::wstring artist = props.Artist().c_str();
-                double posSec = (double)timeline.Position().count() / 10000000.0 + 0.4; // offset for better sync
+                double posSec = (double)timeline.Position().count() / 10000000.0; 
                 double durSec = (double)timeline.EndTime().count() / 10000000.0;
                 
                 if (title != g_currentTrack || artist != g_currentArtist) {
@@ -226,7 +223,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         } catch (...) {
         }
         
-        // Reposition dynamically
         HWND hTaskbar = FindWindowW(L"Shell_TrayWnd", NULL);
         if (hTaskbar) {
             RECT taskbarRect;
@@ -234,7 +230,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             
             int w = 500;
             int h = 30;
-            int x = taskbarRect.right - w - 400; // Left of tray
+            int x = taskbarRect.right - w - 400; 
+            
+            HWND hTrayNotify = FindWindowExW(hTaskbar, NULL, L"TrayNotifyWnd", NULL);
+            if (hTrayNotify) {
+                RECT trayRect;
+                GetWindowRect(hTrayNotify, &trayRect);
+                x = trayRect.left - w - 20; 
+            }
+            
             int y = taskbarRect.top + (taskbarRect.bottom - taskbarRect.top - h) / 2;
             
             SetWindowPos(hwnd, HWND_TOPMOST, x, y, w, h, SWP_NOACTIVATE);
@@ -244,7 +248,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         return 0;
     }
     case WM_NCHITTEST:
-        return HTTRANSPARENT; // Click through
+        return HTTRANSPARENT; 
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -274,7 +278,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     
     if (hwnd == NULL) return 0;
     
-    // Set transparent color key to black
     SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
     
     ShowWindow(hwnd, SW_SHOW);

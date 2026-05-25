@@ -3,7 +3,9 @@ import threading
 import asyncio
 import time
 import datetime
-import requests
+import urllib.request
+import urllib.parse
+import json
 import re
 import tkinter as tk
 import ctypes
@@ -30,17 +32,26 @@ class LyricsFetcher:
             if duration_sec:
                 params['duration'] = int(duration_sec)
             
-            resp = requests.get('https://lrclib.net/api/get', params=params, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data and 'syncedLyrics' in data and data['syncedLyrics']:
-                    self.lrc_lines = self.parse_lrc(data['syncedLyrics'])
-                elif data and 'plainLyrics' in data and data['plainLyrics']:
-                    self.lrc_lines = [(0, "♪ (Plain lyrics only)")]
+            qs = urllib.parse.urlencode(params)
+            url = f"https://lrclib.net/api/get?{qs}"
+            
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    if data and 'syncedLyrics' in data and data['syncedLyrics']:
+                        self.lrc_lines = self.parse_lrc(data['syncedLyrics'])
+                    elif data and 'plainLyrics' in data and data['plainLyrics']:
+                        self.lrc_lines = [(0, "♪ (Plain lyrics only)")]
+                    else:
+                        self.lrc_lines = [(0, "♪ (No lyrics found)")]
                 else:
                     self.lrc_lines = [(0, "♪ (No lyrics found)")]
-            else:
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
                 self.lrc_lines = [(0, "♪ (No lyrics found)")]
+            else:
+                self.lrc_lines = [(0, "♪ (Network error)")]
         except Exception as e:
             print("Error fetching lyrics:", e)
             self.lrc_lines = [(0, "♪ (Network error)")]
@@ -177,7 +188,14 @@ def main_gui():
             w = root.winfo_reqwidth()
             h = root.winfo_reqheight()
             
-            x = rect.right - w - 350 
+            hTrayNotify = user32.FindWindowExW(hTaskbar, None, "TrayNotifyWnd", None)
+            if hTrayNotify:
+                tray_rect = wintypes.RECT()
+                user32.GetWindowRect(hTrayNotify, ctypes.byref(tray_rect))
+                x = tray_rect.left - w - 20
+            else:
+                x = rect.right - w - 350 
+                
             y = rect.top + (rect.bottom - rect.top - h) // 2
             
             root.geometry(f"{w}x{h}+{x}+{y}")
