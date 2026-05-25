@@ -1,4 +1,4 @@
-# Lyrics Taskbar (Windows Version)
+# Lyrics Taskbar
 
 A lightweight Windows tool that shows time-synced lyrics for the song currently playing in **Spotify** or any other media player that uses Windows Media Controls. It displays the lyrics directly as an overlay on your Windows Taskbar.
 
