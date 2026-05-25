@@ -52,7 +52,7 @@ std::string UrlEncode(const std::string& value) {
 }
 
 std::string FetchUrl(const std::string& url) {
-    HINTERNET hInternet = InternetOpenA("LyricsTaskbar", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    HINTERNET hInternet = InternetOpenA("LyricsTaskbar/1.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     if (!hInternet) return "";
 
     HINTERNET hUrl = InternetOpenUrlA(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);

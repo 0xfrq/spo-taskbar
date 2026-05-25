@@ -35,7 +35,7 @@ class LyricsFetcher:
             qs = urllib.parse.urlencode(params)
             url = f"https://lrclib.net/api/get?{qs}"
             
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            req = urllib.request.Request(url, headers={'User-Agent': 'LyricsTaskbar/1.0'})
             with urllib.request.urlopen(req, timeout=5) as response:
                 if response.status == 200:
                     data = json.loads(response.read().decode('utf-8'))
