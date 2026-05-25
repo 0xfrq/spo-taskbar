@@ -129,7 +129,6 @@ async def media_poll_loop():
                 playback = session.get_playback_info()
                 position_sec = timeline.position.total_seconds()
                 
-                # Interpolate real-time position
                 if playback and playback.playback_status == GlobalSystemMediaTransportControlsSessionPlaybackStatus.PLAYING:
                     now = datetime.datetime.now(datetime.timezone.utc)
                     elapsed = now - timeline.last_updated_time
