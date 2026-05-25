@@ -20,9 +20,9 @@ This repository contains two versions:
    ```
 3. Run the application:
    ```cmd
-   run.bat
+   python main.py
    ```
-*(Or simply run `python main.py`)*. This version includes a system tray icon (labeled "LM") to easily quit the app.
+This version includes a system tray icon (labeled "LM") to easily quit the app.
 
 ---
 
