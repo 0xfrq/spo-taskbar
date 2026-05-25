@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+*.xcodeproj/
+LyricsMenuBar.app/
+*.dmg
+.dmg-staging/
+.DS_Store

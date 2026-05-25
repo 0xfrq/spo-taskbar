@@ -1,0 +1,3 @@
+@echo off
+echo Starting Lyrics Taskbar...
+python main.py
