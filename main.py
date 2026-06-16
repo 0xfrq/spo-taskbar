@@ -13,6 +13,53 @@ from ctypes import wintypes
 from winsdk.windows.media.control import GlobalSystemMediaTransportControlsSessionManager, GlobalSystemMediaTransportControlsSessionPlaybackStatus
 import pystray
 from PIL import Image, ImageDraw
+import os
+from dotenv import load_dotenv
+from supabase import create_client, Client
+
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_OWNER = os.getenv("GITHUB_OWNER")
+GITHUB_REPO = os.getenv("GITHUB_REPO")
+GITHUB_WORKFLOW = os.getenv("GITHUB_WORKFLOW")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH")
+
+supabase_client = None
+
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Error initializing Supabase client: {e}")
+
+def trigger_github_workflow(title, artist):
+    if not all([GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO]):
+        print("GitHub env vars not set, skipping workflow trigger.")
+        return
+    try:
+        url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/actions/workflows/{GITHUB_WORKFLOW}/dispatches"
+        payload = json.dumps({
+    "ref": GITHUB_BRANCH
+}).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {GITHUB_TOKEN}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "Content-Type": "application/json"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            print(f"GitHub workflow triggered: {resp.status} for '{title}' by {artist}")
+    except urllib.error.HTTPError as e:
+        print(f"GitHub workflow trigger failed: {e.code} - {e.read().decode()}")
+    except Exception as e:
+        print(f"GitHub workflow trigger error: {e}")
 
 class LyricsFetcher:
     def __init__(self):
@@ -110,37 +157,82 @@ def create_tray_icon():
 async def media_poll_loop():
     try:
         manager = await GlobalSystemMediaTransportControlsSessionManager.request_async()
+        print("Media manager initialized successfully")
     except Exception as e:
         print("Could not get media manager:", e)
         return
 
     last_track = None
     last_artist = None
+    retry_counter = 0
 
     while not state.quit_flag:
         try:
+            # Get all sessions to see what's available
+            sessions = manager.get_sessions()
+            if sessions:
+                print(f"Sessions found: {len(sessions)}")
+                for i, s in enumerate(sessions):
+                    source_id = getattr(s, "source_app_user_model_id", "")
+                    playback = s.get_playback_info()
+                    status = playback.playback_status if playback else "Unknown"
+                    print(f"  [{i}] {source_id} - Status: {status}")
+
+            # Try current session first
             session = manager.get_current_session()
+            if not session and len(sessions) > 0:
+                # Fallback: use the first session if current is None
+                session = sessions[0]
+                print(f"Using fallback session: {sessions[0]}")
+
             if session:
                 info = await session.try_get_media_properties_async()
                 title = info.title
                 artist = info.artist
-                
+                print(f"Now playing: {title} - {artist}")
+
+                source_id = getattr(session, "source_app_user_model_id", "")
+                print(f"Source identifier: {source_id}")
+
+                # Determine if this is a known music streaming source
+                streaming_keywords = ["spotify", "music", "youtube", "tidal", "applemusic", "itunes", "soundcloud"]
+                if not any(k in source_id.lower() for k in streaming_keywords):
+                    print("Non‑streaming source detected – skipping lyrics fetch and external pushes.")
+                    state.lyric_text = ""
+                    continue
+
                 timeline = session.get_timeline_properties()
                 playback = session.get_playback_info()
                 position_sec = timeline.position.total_seconds()
-                
+
                 if playback and playback.playback_status == GlobalSystemMediaTransportControlsSessionPlaybackStatus.PLAYING:
                     now = datetime.datetime.now(datetime.timezone.utc)
                     elapsed = now - timeline.last_updated_time
                     position_sec += elapsed.total_seconds()
-                
+
                 duration_sec = timeline.end_time.total_seconds()
-                
+
                 if title != last_track or artist != last_artist:
                     last_track = title
                     last_artist = artist
+                    print(f"New track detected: {title} by {artist}")
                     threading.Thread(target=fetcher.fetch_lyrics, args=(title, artist, duration_sec), daemon=True).start()
-                
+
+                    if title and artist:
+                        if supabase_client:
+                            def publish_to_supabase(t, a):
+                                try:
+                                    supabase_client.table("now_playing").insert({
+                                        "song_name": t,
+                                        "artist_name": a
+                                    }).execute()
+                                    print(f"Published to Supabase: {t} by {a}")
+                                except Exception as e:
+                                    print(f"Error publishing to Supabase: {e}")
+                            threading.Thread(target=publish_to_supabase, args=(title, artist), daemon=True).start()
+
+                        threading.Thread(target=trigger_github_workflow, args=(title, artist), daemon=True).start()
+
                 text = fetcher.get_current_line(position_sec)
                 if not text:
                     text = f"♪ {title} - {artist}"
@@ -150,8 +242,8 @@ async def media_poll_loop():
                 last_track = None
                 last_artist = None
         except Exception as e:
-            pass
-        await asyncio.sleep(0.1)
+            print(f"Error in poll loop: {e}")
+        await asyncio.sleep(0.5)
 
 def run_async_loop():
     loop = asyncio.new_event_loop()

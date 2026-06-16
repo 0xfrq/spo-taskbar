@@ -6,3 +6,4 @@ LyricsMenuBar.app/
 .dmg-staging/
 .DS_Store
 build_*.bat
+.env
