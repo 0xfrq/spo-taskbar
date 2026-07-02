@@ -2,6 +2,12 @@
 
 A lightweight Windows tool that shows time-synced lyrics for the song currently playing in **Spotify** or any other media player that uses Windows Media Controls. It displays the lyrics directly as an overlay on your Windows Taskbar.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="spo-taskbar-architecture.svg">
+  <source media="(prefers-color-scheme: light)" srcset="spo-taskbar-architecture.svg">
+  <img src="spo-taskbar-architecture.svg" alt="Spo-Taskbar Architecture Diagram">
+</picture>
+
 This repository contains two versions:
 1. **Python Version (Recommended, easy to run)**
 2. **C++ Native Version (For zero-dependency deployment)**
@@ -49,5 +55,3 @@ You can use the included `build_standalone.bat` script to package the Python ver
 - Uses the Windows `GlobalSystemMediaTransportControlsSessionManager` to natively get the current track, artist, and playback position.
 - Fetches time-synced LRC files from [lrclib.net](https://lrclib.net).
 - Creates a transparent, borderless overlay right on top of your Windows Taskbar that updates seamlessly.
-
-*btw ini kenapa html sama latex deh kedetectnyad di sebelah ->->->
