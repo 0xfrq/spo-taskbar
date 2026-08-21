@@ -257,6 +257,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+    HANDLE hMutex = CreateMutexW(NULL, TRUE, L"Local\\LyricsTaskbarMutex");
+    if (hMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS) {
+        if (hMutex) CloseHandle(hMutex);
+        return 0;
+    }
+
     winrt::init_apartment();
 
     const wchar_t CLASS_NAME[] = L"LyricsTaskbarClass";
@@ -288,6 +294,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    
+
+    CloseHandle(hMutex);
     return 0;
 }

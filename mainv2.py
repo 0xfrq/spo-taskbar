@@ -358,6 +358,11 @@ def main_gui():
     root.mainloop()
 
 if __name__ == "__main__":
+    # Prevent multiple instances using a named system mutex
+    _mutex = ctypes.windll.kernel32.CreateMutexW(None, True, "Local\\LyricsTaskbarMutex")
+    if not _mutex or ctypes.windll.kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS = 183
+        sys.exit(0)
+
     tray_thread = threading.Thread(target=create_tray_icon, daemon=True)
     tray_thread.start()
     

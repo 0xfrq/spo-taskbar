@@ -1,57 +1,76 @@
-# Lyrics Taskbar
+﻿# Lyrics Taskbar
 
-A lightweight Windows tool that shows time-synced lyrics for the song currently playing in **Spotify** or any other media player that uses Windows Media Controls. It displays the lyrics directly as an overlay on your Windows Taskbar.
+Lyrics Taskbar is a lightweight Windows utility that displays time-synced lyrics for the track currently playing in Spotify or another player supported by Windows Media Controls.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="spo-taskbar-architecture.svg">
-  <source media="(prefers-color-scheme: light)" srcset="spo-taskbar-architecture.svg">
-  <img src="spo-taskbar-architecture.svg" alt="Spo-Taskbar Architecture Diagram">
-</picture>
+![Lyrics Taskbar architecture](spo-taskbar-architecture.svg)
 
-This repository contains two versions:
-1. **Python Version (Recommended, easy to run)**
-2. **C++ Native Version (For zero-dependency deployment)**
+## Features
 
-## Python Version (main.py)
+- Reads the active media session through Windows Media Controls.
+- Fetches synchronized .lrc lyrics from [LRCLIB](https://lrclib.net).
+- Displays lyrics in a transparent taskbar overlay.
+- Supports a system-tray menu for quickly exiting the app.
+- Includes Python and native C++ implementations.
 
-### Requirements
-- Windows 10/11
-- Python 3.11+ 
+## Requirements
 
-### Installation & Run
-1. Install Python (make sure to check "Add Python to PATH" during installation).
-2. Open a terminal in this directory and install the dependencies:
-   ```cmd
-   pip install -r requirements.txt
-   ```
-3. Run the application:
-   ```cmd
-   python main.py
-   ```
-This version includes a system tray icon (labeled "LM") to easily quit the app.
+- Windows 10 or Windows 11
+- Python 3.11 or newer for the Python implementation
 
----
+Install dependencies:
 
-## C++ Native Version (main.cpp)
+`powershell
+python -m pip install -r requirements.txt
+```
+Run the recommended implementation:
 
-This is a pure C++ implementation. However, because it hooks directly into modern Windows SDK APIs (`C++/WinRT`), **it fundamentally requires Microsoft Visual Studio** to compile. MinGW/GCC cannot compile WinRT headers natively.
+`powershell
+python main.py
+```
+mainv2.py is an alternative implementation for v2 behavior testing.
 
-If you don't have Visual Studio installed, don't worry! I have provided a way to build a completely standalone `.exe` using Python instead:
+## Configuration
 
-### Building a Standalone Executable (No VS Required)
-You can use the included `build_standalone.bat` script to package the Python version into a single, zero-dependency `.exe` file using `PyInstaller`.
-1. Make sure Python is installed.
-2. Run `build_standalone.bat`.
-3. It will generate a standalone `LyricsTaskbar.exe` in the `dist/` folder which you can use forever without needing Python or Visual Studio installed!
-### Compiling C++ (If you install Visual Studio)
-1. Open a **Developer Command Prompt for VS**.
-2. Run `cl.exe /EHsc /std:c++17 /W4 main.cpp /link /SUBSYSTEM:WINDOWS /OUT:LyricsTaskbar.exe`
-3. This will output a native `LyricsTaskbar.exe`.
+Optional integrations read settings from a local .env file. Start from the template:
 
----
+`powershell
+Copy-Item .env.example .env
+```
+Keep real credentials local and never commit .env or publish its contents.
 
-## How It Works
+## Building
 
-- Uses the Windows `GlobalSystemMediaTransportControlsSessionManager` to natively get the current track, artist, and playback position.
-- Fetches time-synced LRC files from [lrclib.net](https://lrclib.net).
-- Creates a transparent, borderless overlay right on top of your Windows Taskbar that updates seamlessly.
+Create a standalone Python executable with PyInstaller:
+
+`powershell
+./build_standalone.bat
+```
+Build output is written to dist/ and ignored by Git.
+
+The native C++ implementation requires Visual Studio with C++/WinRT support:
+
+`cmd
+cl.exe /EHsc /std:c++17 /W4 main.cpp /link /SUBSYSTEM:WINDOWS /OUT:LyricsTaskbar.exe
+```
+## Tests
+
+Run the maintained smoke tests with:
+
+`powershell
+python -m pytest
+```
+## Project layout
+
+| Path | Purpose |
+| --- | --- |
+| main.py | Recommended Python implementation |
+| mainv2.py | Alternative Python implementation |
+| main.cpp | Native Windows implementation |
+|
+equirements.txt | Python dependencies |
+| LyricsTaskbar*.spec | PyInstaller specifications |
+| spo-taskbar-architecture.svg | Architecture diagram |
+
+## License
+
+No license has been declared yet. Add one before distributing the project publicly.
