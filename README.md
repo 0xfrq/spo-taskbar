@@ -19,12 +19,12 @@ Lyrics Taskbar is a lightweight Windows utility that displays time-synced lyrics
 
 Install dependencies:
 
-`powershell
+```powershell
 python -m pip install -r requirements.txt
 ```
 Run the recommended implementation:
 
-`powershell
+```powershell
 python main.py
 ```
 mainv2.py is an alternative implementation for v2 behavior testing.
@@ -33,7 +33,7 @@ mainv2.py is an alternative implementation for v2 behavior testing.
 
 Optional integrations read settings from a local .env file. Start from the template:
 
-`powershell
+```powershell
 Copy-Item .env.example .env
 ```
 Keep real credentials local and never commit .env or publish its contents.
@@ -42,21 +42,21 @@ Keep real credentials local and never commit .env or publish its contents.
 
 Create a standalone Python executable with PyInstaller:
 
-`powershell
+```powershell
 ./build_standalone.bat
 ```
 Build output is written to dist/ and ignored by Git.
 
 The native C++ implementation requires Visual Studio with C++/WinRT support:
 
-`cmd
+```cmd
 cl.exe /EHsc /std:c++17 /W4 main.cpp /link /SUBSYSTEM:WINDOWS /OUT:LyricsTaskbar.exe
 ```
 ## Tests
 
 Run the maintained smoke tests with:
 
-`powershell
+```powershell
 python -m pytest
 ```
 ## Project layout
@@ -67,7 +67,7 @@ python -m pytest
 | mainv2.py | Alternative Python implementation |
 | main.cpp | Native Windows implementation |
 |
-equirements.txt | Python dependencies |
+| requirements.txt | Python dependencies |
 | LyricsTaskbar*.spec | PyInstaller specifications |
 | spo-taskbar-architecture.svg | Architecture diagram |
 
